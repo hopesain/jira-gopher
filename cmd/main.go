@@ -1,12 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/hopesain/gojira/internal/jira"
+	"github.com/hopesain/gojira/internal/jira/myself"
 	"github.com/joho/godotenv"
+)
+
+var (
+	JIRA_EMAIL     string
+	JIRA_API_TOKEN string
+	JIRA_BASE_URL  string
 )
 
 func main() {
@@ -18,18 +27,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	baseURL := os.Getenv("JIRA_BASE_URL") // e.g. https://your-domain.atlassian.net
-	email := os.Getenv("JIRA_EMAIL")
-	token := os.Getenv("JIRA_API_TOKEN")
+	JIRA_EMAIL = os.Getenv("JIRA_EMAIL")
+	JIRA_API_TOKEN = os.Getenv("JIRA_API_TOKEN")
+	JIRA_BASE_URL = os.Getenv("JIRA_BASE_URL")
 
-	if baseURL == "" || email == "" || token == "" {
-		slog.Error("missing required env vars", "need", "JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN")
+	jiraCredentials := jira.JiraCredentials{
+		Email:   JIRA_EMAIL,
+		Token:   JIRA_API_TOKEN,
+		BaseUrl: JIRA_BASE_URL,
+	}
+
+	if err := jiraCredentials.Validate(); err != nil {
+		slog.Error("validation error", "error", err)
 		os.Exit(1)
 	}
 
-	callJira(baseURL, email, token, "/rest/api/3/myself")
-	callJira(baseURL, email, token, "/rest/api/3/project/search")
-	callJira(baseURL, email, token, "/rest/api/3/serverInfo")
+	fmt.Println("All credentials available")
+
+	if err := myself.GetCurrentUser(jiraCredentials); err != nil {
+		slog.Error("failed to get current user information", "error", err)
+		os.Exit(1)
+	}
+
 }
 
 // callJira hits a single Jira REST endpoint and logs the result. It's a
