@@ -10,6 +10,46 @@ import (
 	"github.com/hopesain/gojira/internal/jira"
 )
 
+type ProjectTypeDefault struct {
+	ProjectType        string
+	ProjectTypeKey     string
+	ProjectTemplateKey string
+}
+
+func DefaultProjectTypes() []ProjectTypeDefault {
+	return []ProjectTypeDefault{
+		{
+			ProjectType:        "software",
+			ProjectTypeKey:     "software",
+			ProjectTemplateKey: "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
+		},
+		{
+			ProjectType:        "business",
+			ProjectTypeKey:     "business",
+			ProjectTemplateKey: "com.atlassian.jira-core-project-templates:jira-core-simplified-task-tracking",
+		},
+		{
+			ProjectType:        "service desk",
+			ProjectTypeKey:     "service_desk",
+			ProjectTemplateKey: "com.atlassian.servicedesk:simplified-it-service-management",
+		},
+		{
+			ProjectType:        "customer service",
+			ProjectTypeKey:     "customer_service",
+			ProjectTemplateKey: "com.atlassian.jcs:customer-service-management",
+		},
+	}
+}
+
+func GetProjectTypeDefault(projectType string) (ProjectTypeDefault, error) {
+	for _, pt := range DefaultProjectTypes() {
+		if pt.ProjectType == projectType {
+			return pt, nil
+		}
+	}
+	return ProjectTypeDefault{}, fmt.Errorf("no default template found for project type: %q", projectType)
+}
+
 func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 	client := &http.Client{
 		Timeout: time.Second * 15,
