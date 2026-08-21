@@ -19,7 +19,6 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		slog.Error("failed to build the request", "error", err)
 		return fmt.Errorf("failed to build the request: %w", err)
 	}
 
@@ -28,7 +27,6 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("request failed", "url", url, "error", err)
 		return fmt.Errorf("failed to get all project types: %w", err)
 	}
 
@@ -36,12 +34,10 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		slog.Error("failed to read the response body", "error", err)
 		return fmt.Errorf("failed to read the response body: %w", err)
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		slog.Error("incorrect authentication credentials")
 		return fmt.Errorf("incorrect authentication credentials")
 	}
 
