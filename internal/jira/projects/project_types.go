@@ -1,9 +1,8 @@
 package projects
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -47,7 +46,7 @@ func GetProjectTypeDefault(projectType string) (ProjectTypeDefault, error) {
 	return ProjectTypeDefault{}, fmt.Errorf("no default template found for project type: %v", projectType)
 }
 
-func GetAllProjectTypes(credentials jira.JiraCredentials) error {
+func GetAllProjectTypes(credentials jira.JiraCredentials) ([]ProjectTypeResponse, error) {
 	client := &http.Client{
 		Timeout: time.Second * 15,
 	}
@@ -56,7 +55,7 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to build the request: %w", err)
+		return nil, fmt.Errorf("failed to build the request: %w", err)
 	}
 
 	req.SetBasicAuth(credentials.Email, credentials.Token)
@@ -64,27 +63,19 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to get all project types: %w", err)
+		return nil, fmt.Errorf("failed to get all project types: %w", err)
 	}
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read the response body: %w", err)
-	}
-
 	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("incorrect authentication credentials")
+		return nil, fmt.Errorf("incorrect authentication credentials")
 	}
 
-	slog.Info("jira request completed",
-		"path", url,
-		"status", resp.Status,
-		"status_code", resp.StatusCode,
-		"body", string(body),
-	)
+	var response []ProjectTypeResponse
 
-	return nil
+	json.NewDecoder(resp.Body).Decode(&response)
+
+	return response, nil
 
 }
