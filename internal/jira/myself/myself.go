@@ -1,16 +1,15 @@
 package myself
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/hopesain/gojira/internal/jira"
 )
 
-func GetCurrentUser(credentials jira.JiraCredentials) error {
+func GetCurrentUser(credentials jira.JiraCredentials) (MyselfResponse, error) {
 	client := &http.Client{
 		Timeout: time.Second * 15,
 	}
@@ -19,7 +18,7 @@ func GetCurrentUser(credentials jira.JiraCredentials) error {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return fmt.Errorf("failed to build the request: %w", err)
+		return MyselfResponse{}, fmt.Errorf("failed to build the request: %w", err)
 	}
 
 	req.SetBasicAuth(credentials.Email, credentials.Token)
@@ -27,27 +26,30 @@ func GetCurrentUser(credentials jira.JiraCredentials) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return MyselfResponse{}, fmt.Errorf("request failed: %w", err)
 	}
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read the request body: %w", err)
-	}
-
 	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("incorrect authorization credentials. check your email and token")
+		return MyselfResponse{}, fmt.Errorf("incorrect authorization credentials. check your email and token")
 	}
 
-	slog.Info("jira request completed",
-		"path", url,
-		"status", resp.Status,
-		"status_code", resp.StatusCode,
-		"body", string(body),
-	)
+	var response MyselfResponse
 
-	return nil
+	json.NewDecoder(resp.Body).Decode(&response)
 
+	return response, nil
+
+}
+
+func UserAccountID(credentials jira.JiraCredentials) (accountID string, err error) {
+	userInformation, err := GetCurrentUser(credentials)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve the user information: %w", err)
+	}
+
+	accountID = userInformation.AccountID
+
+	return accountID, nil
 }
