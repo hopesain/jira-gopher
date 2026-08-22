@@ -3,6 +3,7 @@ package myself
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -31,8 +32,13 @@ func GetCurrentUser(credentials jira.JiraCredentials) (MyselfResponse, error) {
 
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return MyselfResponse{}, fmt.Errorf("failed to read the response body")
+	}
+
 	if resp.StatusCode == http.StatusUnauthorized {
-		return MyselfResponse{}, fmt.Errorf("incorrect authorization credentials. check your email and token")
+		return MyselfResponse{}, fmt.Errorf("incorrect authorization credentials. check your email and token: %v", string(body))
 	}
 
 	var response MyselfResponse
