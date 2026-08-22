@@ -12,69 +12,6 @@ import (
 	"github.com/hopesain/gojira/internal/jira"
 )
 
-const (
-	MAX_CHARACTER_LENGTH = 10
-)
-
-type CreateProjectRequest struct {
-	AssigneeType       string `json:"assigneeType"`
-	Description        string `json:"description"`
-	Key                string `json:"key"`
-	LeadAccountId      string `json:"leadAccountId"`
-	Name               string `json:"name"`
-	ProjectTemplateKey string `json:"projectTemplateKey"`
-	ProjectTypeKey     string `json:"projectTypeKey"`
-}
-
-func (c *CreateProjectRequest) Validate() error {
-	if c.AssigneeType != "UNASSIGNED" && c.AssigneeType != "PROJECT_LEAD" {
-		return fmt.Errorf("assignee type must either be UNASSIGNED or PROJECT_LEAD")
-	}
-
-	if len(c.Key) > MAX_CHARACTER_LENGTH {
-		return fmt.Errorf("the key exceeds maximum length: %v", c.Key)
-	}
-
-	var missing []string
-
-	if c.AssigneeType == "" {
-		missing = append(missing, "assign type")
-	}
-
-	if c.Description == "" {
-		missing = append(missing, "description")
-	}
-
-	if c.Key == "" {
-		missing = append(missing, "key")
-	}
-
-	if c.LeadAccountId == "" {
-		missing = append(missing, "lead account id")
-	}
-
-	if c.Name == "" {
-		missing = append(missing, "name")
-	}
-
-	if c.ProjectTemplateKey == "" {
-		missing = append(missing, "project template key")
-	}
-
-	if c.ProjectTypeKey == "" {
-		missing = append(missing, "project type key")
-	}
-
-	if len(missing) != 0 {
-		return fmt.Errorf("missing required fields for creating a project in Jira: %v", missing)
-	}
-
-	return nil
-}
-
-type CreateProjectResponse struct {
-}
-
 func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 	client := &http.Client{
 		Timeout: time.Second * 15,
