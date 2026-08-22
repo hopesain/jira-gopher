@@ -1,5 +1,11 @@
 package projects
 
+type ProjectTypeDefault struct {
+	ProjectType        string
+	ProjectTypeKey     string
+	ProjectTemplateKey string
+}
+
 type ProjectTypeResponse struct {
 	Key                string `json:"key"`
 	FormattedKey       string `json:"formattedKey"`

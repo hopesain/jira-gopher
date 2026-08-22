@@ -9,12 +9,6 @@ import (
 	"github.com/hopesain/gojira/internal/jira"
 )
 
-type ProjectTypeDefault struct {
-	ProjectType        string
-	ProjectTypeKey     string
-	ProjectTemplateKey string
-}
-
 var defaultProjectTypes = map[string]ProjectTypeDefault{
 	"software": {
 		ProjectType:        "software",
