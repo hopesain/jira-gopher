@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -34,16 +33,18 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+
 	if resp.StatusCode == http.StatusBadRequest {
-		return ProjectsResponse{}, fmt.Errorf("invalid request")
+		return ProjectsResponse{}, fmt.Errorf("invalid request: %v", string(body))
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return ProjectsResponse{}, fmt.Errorf("incorrect or missing authentication credentials")
+		return ProjectsResponse{}, fmt.Errorf("incorrect or missing authentication credentials: %v", string(body))
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return ProjectsResponse{}, fmt.Errorf("no projects matching the search criteria are found")
+		return ProjectsResponse{}, fmt.Errorf("no projects matching the search criteria are found: %v", string(body))
 	}
 
 	var response ProjectsResponse
@@ -54,9 +55,9 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 
 }
 
-func CreateProject(credentials jira.JiraCredentials, payload CreateProjectRequest) error {
+func CreateProject(credentials jira.JiraCredentials, payload CreateProjectRequest) (CreateProjectResponse, error) {
 	if err := payload.Validate(); err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return CreateProjectResponse{}, fmt.Errorf("validation error: %w", err)
 	}
 
 	client := &http.Client{
@@ -67,12 +68,12 @@ func CreateProject(credentials jira.JiraCredentials, payload CreateProjectReques
 
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal or serialize the payload: %w", err)
+		return CreateProjectResponse{}, fmt.Errorf("failed to marshal or serialize the payload: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonPayload))
 	if err != nil {
-		return fmt.Errorf("failed to build the request: %w", err)
+		return CreateProjectResponse{}, fmt.Errorf("failed to build the request: %w", err)
 	}
 
 	req.SetBasicAuth(credentials.Email, credentials.Token)
@@ -81,37 +82,29 @@ func CreateProject(credentials jira.JiraCredentials, payload CreateProjectReques
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return CreateProjectResponse{}, fmt.Errorf("request failed: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read the response body: %w", err)
-	}
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return fmt.Errorf("invalid request: %s", string(body))
+		return CreateProjectResponse{}, fmt.Errorf("invalid request: %v", string(body))
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("incorrect or missing authentication credentials")
+		return CreateProjectResponse{}, fmt.Errorf("incorrect or missing authentication credentials: %v", string(body))
 	}
 
 	if resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("you do not have permission to create a project")
+		return CreateProjectResponse{}, fmt.Errorf("you do not have permission to create a project: %v", string(body))
 	}
 
-	if resp.StatusCode == http.StatusConflict {
-		return fmt.Errorf("a project with this key or name already exists")
-	}
+	var response CreateProjectResponse
 
-	slog.Info("jira request completed",
-		"path", url,
-		"status", resp.Status,
-		"status_code", resp.StatusCode,
-		"body", string(body),
-	)
+	json.NewDecoder(resp.Body).Decode(&response)
 
-	return nil
+	return response, nil
+
 }

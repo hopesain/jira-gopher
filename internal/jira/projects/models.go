@@ -123,4 +123,7 @@ func (c *CreateProjectRequest) Validate() error {
 }
 
 type CreateProjectResponse struct {
+	Self string `json:"self"`
+	ID   int    `json:"id"`
+	Key  string `json:"key"`
 }
