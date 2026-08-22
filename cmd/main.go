@@ -41,39 +41,42 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("All credentials available")
-	accountID := "712020:825cff40-821e-40d6-b058-c9d47a88702b"
-
-	projectType, err := projects.GetProjectTypeDefault("software")
+	accountID, err := myself.UserAccountID(jiraCredentials)
 	if err != nil {
-		slog.Error("failed to resolve project type default", "error", err)
+		slog.Error("failed to retrieve the user account ID", "error", err)
 		os.Exit(1)
 	}
-	fmt.Println(projectType, accountID)
 
-	// createProjectPayload := projects.CreateProjectRequest{
-	// 	AssigneeType:       "UNASSIGNED",
-	// 	Description:        "programming guidelines",
-	// 	Key:                "PGL",
-	// 	LeadAccountId:      accountID,
-	// 	Name:               "programming guidelines",
-	// 	ProjectTemplateKey: projectType.ProjectTemplateKey,
-	// 	ProjectTypeKey:     projectType.ProjectTypeKey,
-	// }
-
-	// if err := projects.CreateProject(jiraCredentials, createProjectPayload); err != nil {
-	// 	slog.Error("failed to create a project", "error", err)
-	// 	os.Exit(1)
-	// }
-
-	id, err := myself.UserAccountID(jiraCredentials)
-	println("Account ID", id)
-
-	pTypes, err := projects.GetAllProjectTypes(jiraCredentials)
+	projectType, err := projects.GetProjectTypeDefault("business")
 	if err != nil {
-		slog.Error("failed to load all project types", "error", err)
+		slog.Error("failed to retrieve the default project types and templates", "error", err)
 	}
 
-	fmt.Println(pTypes)
+	createProjectPayload := projects.CreateProjectRequest{
+		AssigneeType:       "UNASSIGNED",
+		Description:        "business as usual",
+		Key:                "PB",
+		LeadAccountId:      accountID,
+		Name:               "Parrot Business",
+		ProjectTemplateKey: projectType.ProjectTemplateKey,
+		ProjectTypeKey:     projectType.ProjectTypeKey,
+	}
+
+	res, err := projects.CreateProject(jiraCredentials, createProjectPayload)
+	if err != nil {
+		slog.Error("failed to create a project", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(res)
+
+	fmt.Println("-------------------------------------------------------------------")
+
+	projects, err := projects.GetProjects(jiraCredentials)
+	if err != nil {
+		slog.Error("failed to retrieve all projects", "error", err)
+		os.Exit(1)
+	}
+	fmt.Println(projects)
 
 }
