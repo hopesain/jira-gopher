@@ -16,38 +16,35 @@ type ProjectTypeDefault struct {
 	ProjectTemplateKey string
 }
 
-func DefaultProjectTypes() []ProjectTypeDefault {
-	return []ProjectTypeDefault{
-		{
-			ProjectType:        "software",
-			ProjectTypeKey:     "software",
-			ProjectTemplateKey: "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
-		},
-		{
-			ProjectType:        "business",
-			ProjectTypeKey:     "business",
-			ProjectTemplateKey: "com.atlassian.jira-core-project-templates:jira-core-simplified-task-tracking",
-		},
-		{
-			ProjectType:        "service desk",
-			ProjectTypeKey:     "service_desk",
-			ProjectTemplateKey: "com.atlassian.servicedesk:simplified-it-service-management",
-		},
-		{
-			ProjectType:        "customer service",
-			ProjectTypeKey:     "customer_service",
-			ProjectTemplateKey: "com.atlassian.jcs:customer-service-management",
-		},
-	}
+var defaultProjectTypes = map[string]ProjectTypeDefault{
+	"software": {
+		ProjectType:        "software",
+		ProjectTypeKey:     "software",
+		ProjectTemplateKey: "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
+	},
+	"business": {
+		ProjectType:        "business",
+		ProjectTypeKey:     "business",
+		ProjectTemplateKey: "com.atlassian.jira-core-project-templates:jira-core-simplified-task-tracking",
+	},
+	"service desk": {
+		ProjectType:        "service desk",
+		ProjectTypeKey:     "service_desk",
+		ProjectTemplateKey: "com.atlassian.servicedesk:simplified-it-service-management",
+	},
+	"customer service": {
+		ProjectType:        "customer service",
+		ProjectTypeKey:     "customer_service",
+		ProjectTemplateKey: "com.atlassian.jcs:customer-service-management",
+	},
 }
 
 func GetProjectTypeDefault(projectType string) (ProjectTypeDefault, error) {
-	for _, pt := range DefaultProjectTypes() {
-		if pt.ProjectType == projectType {
-			return pt, nil
-		}
+	ptd, exists := defaultProjectTypes[projectType]
+	if exists {
+		return ptd, nil
 	}
-	return ProjectTypeDefault{}, fmt.Errorf("no default template found for project type: %q", projectType)
+	return ProjectTypeDefault{}, fmt.Errorf("no default template found for project type: %v", projectType)
 }
 
 func GetAllProjectTypes(credentials jira.JiraCredentials) error {
