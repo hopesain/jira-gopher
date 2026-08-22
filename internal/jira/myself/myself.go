@@ -32,7 +32,7 @@ func GetCurrentUser(credentials jira.JiraCredentials) (MyselfResponse, error) {
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(req.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return MyselfResponse{}, fmt.Errorf("failed to read the response body")
 	}
@@ -43,7 +43,9 @@ func GetCurrentUser(credentials jira.JiraCredentials) (MyselfResponse, error) {
 
 	var response MyselfResponse
 
-	json.NewDecoder(resp.Body).Decode(&response)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return MyselfResponse{}, fmt.Errorf("failed to decode the response body: %w", err)
+	}
 
 	return response, nil
 

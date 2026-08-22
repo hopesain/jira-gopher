@@ -52,7 +52,9 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 
 	var response ProjectsResponse
 
-	json.NewDecoder(resp.Body).Decode(&response)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return ProjectsResponse{}, fmt.Errorf("failed to decode the response body: %w", err)
+	}
 
 	return response, nil
 
@@ -91,6 +93,9 @@ func CreateProject(credentials jira.JiraCredentials, payload CreateProjectReques
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return CreateProjectResponse{}, fmt.Errorf("failed to read the response body: %w", err)
+	}
 
 	if resp.StatusCode == http.StatusBadRequest {
 		return CreateProjectResponse{}, fmt.Errorf("invalid request: %v", string(body))
@@ -106,7 +111,9 @@ func CreateProject(credentials jira.JiraCredentials, payload CreateProjectReques
 
 	var response CreateProjectResponse
 
-	json.NewDecoder(resp.Body).Decode(&response)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return CreateProjectResponse{}, fmt.Errorf("failed to decode the response body")
+	}
 
 	return response, nil
 

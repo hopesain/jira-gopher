@@ -63,7 +63,7 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) ([]ProjectTypeResponse
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(req.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read the response body: %w", err)
 	}
@@ -74,7 +74,9 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) ([]ProjectTypeResponse
 
 	var response []ProjectTypeResponse
 
-	json.NewDecoder(resp.Body).Decode(&response)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to decode the response body: %w", err)
+	}
 
 	return response, nil
 

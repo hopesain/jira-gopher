@@ -47,17 +47,33 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Println(accountID)
+
 	projectType, err := projects.GetProjectTypeDefault("business")
 	if err != nil {
 		slog.Error("failed to retrieve the default project types and templates", "error", err)
 	}
 
+	fmt.Println(projectType)
+
+	fmt.Println("------------------------------------------------------------------")
+
+	projectTypes, err := projects.GetAllProjectTypes(jiraCredentials)
+	if err != nil {
+		slog.Error("failed to retrieve project types", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(projectTypes)
+
+	fmt.Println("-------------------------------------------------------------------")
+
 	createProjectPayload := projects.CreateProjectRequest{
 		AssigneeType:       "UNASSIGNED",
 		Description:        "business as usual",
-		Key:                "PB",
+		Key:                "PI",
 		LeadAccountId:      accountID,
-		Name:               "Parrot Business",
+		Name:               "Parrot Institute",
 		ProjectTemplateKey: projectType.ProjectTemplateKey,
 		ProjectTypeKey:     projectType.ProjectTypeKey,
 	}
@@ -70,7 +86,7 @@ func main() {
 
 	fmt.Println(res)
 
-	fmt.Println("-------------------------------------------------------------------")
+	fmt.Println("----------------------------------------------------------------")
 
 	projects, err := projects.GetProjects(jiraCredentials)
 	if err != nil {
