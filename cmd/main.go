@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/hopesain/gojira/internal/jira"
 	"github.com/hopesain/gojira/internal/jira/myself"
+	"github.com/hopesain/gojira/internal/jira/projects"
 	"github.com/joho/godotenv"
 )
 
@@ -43,44 +42,38 @@ func main() {
 	}
 
 	fmt.Println("All credentials available")
+	accountID := "712020:825cff40-821e-40d6-b058-c9d47a88702b"
 
-	if err := myself.GetCurrentUser(jiraCredentials); err != nil {
-		slog.Error("failed to get current user information", "error", err)
+	projectType, err := projects.GetProjectTypeDefault("software")
+	if err != nil {
+		slog.Error("failed to resolve project type default", "error", err)
 		os.Exit(1)
 	}
+	fmt.Println(projectType, accountID)
 
-}
+	// createProjectPayload := projects.CreateProjectRequest{
+	// 	AssigneeType:       "UNASSIGNED",
+	// 	Description:        "programming guidelines",
+	// 	Key:                "PGL",
+	// 	LeadAccountId:      accountID,
+	// 	Name:               "programming guidelines",
+	// 	ProjectTemplateKey: projectType.ProjectTemplateKey,
+	// 	ProjectTypeKey:     projectType.ProjectTypeKey,
+	// }
 
-// callJira hits a single Jira REST endpoint and logs the result. It's a
-// throwaway helper for smoke-testing multiple endpoints — not meant to
-// survive once real architecture goes in.
-func callJira(baseURL, email, token, path string) {
-	req, err := http.NewRequest(http.MethodGet, baseURL+path, nil)
+	// if err := projects.CreateProject(jiraCredentials, createProjectPayload); err != nil {
+	// 	slog.Error("failed to create a project", "error", err)
+	// 	os.Exit(1)
+	// }
+
+	id, err := myself.UserAccountID(jiraCredentials)
+	println("Account ID", id)
+
+	pTypes, err := projects.GetAllProjectTypes(jiraCredentials)
 	if err != nil {
-		slog.Error("failed to build request", "path", path, "error", err)
-		return
+		slog.Error("failed to load all project types", "error", err)
 	}
 
-	req.SetBasicAuth(email, token)
-	req.Header.Set("Accept", "application/json")
+	fmt.Println(pTypes)
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		slog.Error("request failed", "path", path, "error", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		slog.Error("failed to read response body", "path", path, "error", err)
-		return
-	}
-
-	slog.Info("jira request completed",
-		"path", path,
-		"status", resp.Status,
-		"status_code", resp.StatusCode,
-		"body", string(body),
-	)
 }
