@@ -34,6 +34,9 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ProjectsResponse{}, fmt.Errorf("failed to read the response body: %w", err)
+	}
 
 	if resp.StatusCode == http.StatusBadRequest {
 		return ProjectsResponse{}, fmt.Errorf("invalid request: %v", string(body))

@@ -3,6 +3,7 @@ package projects
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -62,8 +63,13 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) ([]ProjectTypeResponse
 
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read the response body: %w", err)
+	}
+
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("incorrect authentication credentials")
+		return nil, fmt.Errorf("incorrect authentication credentials: %v", string(body))
 	}
 
 	var response []ProjectTypeResponse
