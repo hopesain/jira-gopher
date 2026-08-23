@@ -58,6 +58,8 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 
 	return response, nil
 
+	
+
 }
 
 func CreateProject(credentials jira.JiraCredentials, payload CreateProjectRequest) (CreateProjectResponse, error) {
