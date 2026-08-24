@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/hopesain/gojira/internal/jira"
+	"github.com/hopesain/gojira/internal/jira/issues"
 	"github.com/hopesain/gojira/internal/jira/myself"
 	"github.com/hopesain/gojira/internal/jira/projects"
 	"github.com/joho/godotenv"
@@ -68,31 +70,47 @@ func main() {
 
 	fmt.Println("-------------------------------------------------------------------")
 
-	createProjectPayload := projects.CreateProjectRequest{
-		AssigneeType:       "UNASSIGNED",
-		Description:        "business as usual",
-		Key:                "PI",
-		LeadAccountId:      accountID,
-		Name:               "Parrot Institute",
-		ProjectTemplateKey: projectType.ProjectTemplateKey,
-		ProjectTypeKey:     projectType.ProjectTypeKey,
-	}
-
-	res, err := projects.CreateProject(jiraCredentials, createProjectPayload)
+	issueTypes, err := issues.GetIssueTypes(jiraCredentials)
 	if err != nil {
-		slog.Error("failed to create a project", "error", err)
+		slog.Error("failed to fetch issue types", "error", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(res)
-
-	fmt.Println("----------------------------------------------------------------")
-
-	projects, err := projects.GetProjects(jiraCredentials)
+	issueTypesJSON, err := json.MarshalIndent(issueTypes, "", "  ")
 	if err != nil {
-		slog.Error("failed to retrieve all projects", "error", err)
+		slog.Error("failed to marshal issue types", "error", err)
 		os.Exit(1)
 	}
-	fmt.Println(projects)
+
+	fmt.Println(string(issueTypesJSON))
+
+	fmt.Println("---------------------------------------------------------------")
+
+	// createProjectPayload := projects.CreateProjectRequest{
+	// 	AssigneeType:       "UNASSIGNED",
+	// 	Description:        "business as usual",
+	// 	Key:                "PI",
+	// 	LeadAccountId:      accountID,
+	// 	Name:               "Parrot Institute",
+	// 	ProjectTemplateKey: projectType.ProjectTemplateKey,
+	// 	ProjectTypeKey:     projectType.ProjectTypeKey,
+	// }
+
+	// res, err := projects.CreateProject(jiraCredentials, createProjectPayload)
+	// if err != nil {
+	// 	slog.Error("failed to create a project", "error", err)
+	// 	os.Exit(1)
+	// }
+
+	// fmt.Println(res)
+
+	// fmt.Println("----------------------------------------------------------------")
+
+	// projects, err := projects.GetProjects(jiraCredentials)
+	// if err != nil {
+	// 	slog.Error("failed to retrieve all projects", "error", err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Println(projects)
 
 }
