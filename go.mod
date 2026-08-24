@@ -1,4 +1,4 @@
-module github.com/hopesain/gojira
+module github.com/hopesain/jira-gopher
 
 go 1.26.5
 

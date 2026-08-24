@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/hopesain/gojira/internal/jira"
-	"github.com/hopesain/gojira/internal/jira/issues"
-	"github.com/hopesain/gojira/internal/jira/myself"
-	"github.com/hopesain/gojira/internal/jira/projects"
+	"github.com/hopesain/jira-gopher/internal/jira"
+	"github.com/hopesain/jira-gopher/internal/jira/issues"
+	"github.com/hopesain/jira-gopher/internal/jira/myself"
+	"github.com/hopesain/jira-gopher/internal/jira/projects"
 	"github.com/joho/godotenv"
 )
 
@@ -104,13 +104,34 @@ func main() {
 
 	// fmt.Println(res)
 
-	// fmt.Println("----------------------------------------------------------------")
+	fmt.Println("----------------------------------------------------------------")
 
-	// projects, err := projects.GetProjects(jiraCredentials)
-	// if err != nil {
-	// 	slog.Error("failed to retrieve all projects", "error", err)
-	// 	os.Exit(1)
-	// }
-	// fmt.Println(projects)
+	projects, err := projects.GetProjects(jiraCredentials)
+	if err != nil {
+		slog.Error("failed to retrieve all projects", "error", err)
+		os.Exit(1)
+	}
+	fmt.Println(projects)
+
+	fmt.Println("---------------------------------------------------------------")
+
+	createIssuePayload := issues.CreateIssueRequest{
+		Fields: issues.CreateIssueFields{
+			Project: issues.ProjectRef{
+				ID: "10066",
+			},
+			IssueType: issues.IssueTypeRef{
+				ID: "10076",
+			},
+			Summary: "Testing issue creation from Go",
+		},
+	}
+
+	if err := issues.CreateIssue(jiraCredentials, createIssuePayload); err != nil {
+		slog.Error("failed to create issue", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("-----------------------------------------------------")
 
 }
