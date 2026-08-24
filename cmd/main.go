@@ -1,13 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 
-	"github.com/hopesain/gojira/internal/jira"
-	"github.com/hopesain/gojira/internal/jira/myself"
-	"github.com/hopesain/gojira/internal/jira/projects"
+	"github.com/hopesain/jira-gopher/internal/jira"
+	"github.com/hopesain/jira-gopher/internal/jira/issues"
+	"github.com/hopesain/jira-gopher/internal/jira/myself"
+	"github.com/hopesain/jira-gopher/internal/jira/projects"
 	"github.com/joho/godotenv"
 )
 
@@ -68,23 +70,39 @@ func main() {
 
 	fmt.Println("-------------------------------------------------------------------")
 
-	createProjectPayload := projects.CreateProjectRequest{
-		AssigneeType:       "UNASSIGNED",
-		Description:        "business as usual",
-		Key:                "PI",
-		LeadAccountId:      accountID,
-		Name:               "Parrot Institute",
-		ProjectTemplateKey: projectType.ProjectTemplateKey,
-		ProjectTypeKey:     projectType.ProjectTypeKey,
-	}
-
-	res, err := projects.CreateProject(jiraCredentials, createProjectPayload)
+	issueTypes, err := issues.GetIssueTypes(jiraCredentials)
 	if err != nil {
-		slog.Error("failed to create a project", "error", err)
+		slog.Error("failed to fetch issue types", "error", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(res)
+	issueTypesJSON, err := json.MarshalIndent(issueTypes, "", "  ")
+	if err != nil {
+		slog.Error("failed to marshal issue types", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(string(issueTypesJSON))
+
+	fmt.Println("---------------------------------------------------------------")
+
+	// createProjectPayload := projects.CreateProjectRequest{
+	// 	AssigneeType:       "UNASSIGNED",
+	// 	Description:        "business as usual",
+	// 	Key:                "PI",
+	// 	LeadAccountId:      accountID,
+	// 	Name:               "Parrot Institute",
+	// 	ProjectTemplateKey: projectType.ProjectTemplateKey,
+	// 	ProjectTypeKey:     projectType.ProjectTypeKey,
+	// }
+
+	// res, err := projects.CreateProject(jiraCredentials, createProjectPayload)
+	// if err != nil {
+	// 	slog.Error("failed to create a project", "error", err)
+	// 	os.Exit(1)
+	// }
+
+	// fmt.Println(res)
 
 	fmt.Println("----------------------------------------------------------------")
 
@@ -94,5 +112,26 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println(projects)
+
+	fmt.Println("---------------------------------------------------------------")
+
+	createIssuePayload := issues.CreateIssueRequest{
+		Fields: issues.CreateIssueFields{
+			Project: issues.ProjectRef{
+				ID: "10066",
+			},
+			IssueType: issues.IssueTypeRef{
+				ID: "10076",
+			},
+			Summary: "Testing issue creation from Go",
+		},
+	}
+
+	if err := issues.CreateIssue(jiraCredentials, createIssuePayload); err != nil {
+		slog.Error("failed to create issue", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("-----------------------------------------------------")
 
 }

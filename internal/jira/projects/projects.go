@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hopesain/gojira/internal/jira"
+	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
 func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
