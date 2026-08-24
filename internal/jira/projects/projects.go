@@ -39,15 +39,39 @@ func GetProjects(credentials jira.JiraCredentials) (ProjectsResponse, error) {
 	}
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return ProjectsResponse{}, fmt.Errorf("invalid request: %v", string(body))
+		return ProjectsResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "invalid request",
+			Body:       body,
+		}
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return ProjectsResponse{}, fmt.Errorf("incorrect or missing authentication credentials: %v", string(body))
+		return ProjectsResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "incorrect or missing authentication credentials",
+			Body:       body,
+		}
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return ProjectsResponse{}, fmt.Errorf("no projects matching the search criteria are found: %v", string(body))
+		return ProjectsResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "no projects matching the search criteria are found",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return ProjectsResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
 	}
 
 	var response ProjectsResponse
@@ -98,15 +122,39 @@ func CreateProject(credentials jira.JiraCredentials, payload CreateProjectReques
 	}
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return CreateProjectResponse{}, fmt.Errorf("invalid request: %v", string(body))
+		return CreateProjectResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "invalid request",
+			Body:       body,
+		}
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return CreateProjectResponse{}, fmt.Errorf("incorrect or missing authentication credentials: %v", string(body))
+		return CreateProjectResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "incorrect or missing authentication credentials",
+			Body:       body,
+		}
 	}
 
 	if resp.StatusCode == http.StatusForbidden {
-		return CreateProjectResponse{}, fmt.Errorf("you do not have permission to create a project: %v", string(body))
+		return CreateProjectResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "user does not have permission to create a project",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		return CreateProjectResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
 	}
 
 	var response CreateProjectResponse

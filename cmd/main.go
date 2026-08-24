@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -127,10 +128,19 @@ func main() {
 		},
 	}
 
-	if err := issues.CreateIssue(jiraCredentials, createIssuePayload); err != nil {
-		slog.Error("failed to create issue", "error", err)
+	cIssue, err := issues.CreateIssue(jiraCredentials, createIssuePayload)
+	if err != nil {
+		var httpErr *jira.HttpResponseError
+
+		if errors.As(err, &httpErr) {
+			fmt.Println(httpErr.Message, httpErr.Status)
+		} else {
+			slog.Error("failed to create issue", "error", err)
+		}
 		os.Exit(1)
 	}
+
+	fmt.Println(cIssue)
 
 	fmt.Println("-----------------------------------------------------")
 

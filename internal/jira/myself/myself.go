@@ -38,7 +38,21 @@ func GetCurrentUser(credentials jira.JiraCredentials) (MyselfResponse, error) {
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return MyselfResponse{}, fmt.Errorf("incorrect authorization credentials. check your email and token: %v", string(body))
+		return MyselfResponse{}, &jira.HttpResponseError{
+			Status: resp.Status,
+			StatusCode: resp.StatusCode,
+			Message: "incorrect or missing authentication credentials",
+			Body: body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return MyselfResponse{}, &jira.HttpResponseError{
+			Status: resp.Status,
+			StatusCode: resp.StatusCode,
+			Message: "something went wrong",
+			Body: body,
+		}
 	}
 
 	var response MyselfResponse

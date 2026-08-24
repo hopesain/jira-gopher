@@ -69,7 +69,21 @@ func GetAllProjectTypes(credentials jira.JiraCredentials) ([]ProjectTypeResponse
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("incorrect authentication credentials: %v", string(body))
+		return nil, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "incorrect or missing authentication credentials",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
 	}
 
 	var response []ProjectTypeResponse

@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
-// Get Issue Types for User
+// Get issue types for user
 func GetIssueTypes(credentials jira.JiraCredentials) ([]IssueType, error) {
 	client := &http.Client{
 		Timeout: time.Second * 15,
@@ -39,23 +38,20 @@ func GetIssueTypes(credentials jira.JiraCredentials) ([]IssueType, error) {
 		return nil, fmt.Errorf("failed to read the request body: %w", err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
+	}
+
 	var response []IssueType
 
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, fmt.Errorf("failed to decode the response body: %w", err)
 	}
 
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted {
-		slog.Info(
-			"successfully fetched issue types",
-			"body", string(body),
-			"status", resp.Status,
-			"status code", resp.StatusCode,
-		)
-
-		return response, nil
-
-	}
-
-	return nil, fmt.Errorf("failed to fetch issue types for user: %v", string(body))
+	return response, nil
 }
