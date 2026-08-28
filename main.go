@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/hopesain/jira-gopher/internal/config"
+	"github.com/hopesain/jira-gopher/internal/issues"
 	"github.com/hopesain/jira-gopher/jira"
 	"github.com/joho/godotenv"
 )
@@ -36,23 +37,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	// issue := issues.CreateIssueRequest{
-	// 	Fields: issues.CreateIssueFields{
-	// 		Project: issues.ProjectRef{
-	// 			ID: "10066",
-	// 		},
-	// 		Summary: "Realization of change",
-	// 	},
-	// }
+	fmt.Println("------------------ Create Issue -------------------------- ")
 
-	// issueCreate, err := client.Issues.Create(issue)
-	// if err != nil {
-	// 	fmt.Println("error: ", err)
-	// 	os.Exit(1)
-	// }
-	// fmt.Println("Create Issue Response: ", issueCreate)
+	issue := issues.CreateIssueRequest{
+		Fields: issues.CreateIssueFields{
+			Project: issues.ProjectRef{
+				ID: "projectID",
+			},
+			IssueType: issues.IssueTypeRef{
+				ID: "issueTypeID",
+			},
+			Summary: "New Jira Issue",
+		},
+	}
 
-	fmt.Println("-------------------------------------------")
+	issueCreate, err := client.Issues.Create(issue)
+	if err != nil {
+		fmt.Println("error: ", err)
+		os.Exit(1)
+	}
+	fmt.Println("Create Issue Response: ", issueCreate)
+
+	fmt.Println("---------------------- User Account ID ---------------------")
 
 	accountID, err := client.Myself.UserAccountID()
 	if err != nil {
@@ -69,8 +75,19 @@ func main() {
 	fmt.Println("Project Type: ", ptd)
 
 	fmt.Println("----------------- Get Project -----------------------")
-	client.Projects.Get("10033")
+	projectResponse, err := client.Projects.Get("projectIDorKey")
+	if err != nil {
+		fmt.Println("error: ", err)
+		os.Exit(1)
+	}
 
+	fmt.Println("---------------------- Issue Types ------------------------")
+
+	issueTypes := projectResponse.IssueTypes
+	for _, issueType := range issueTypes {
+		fmt.Println(issueType)
+		fmt.Println("---------------- Another One ----------------------")
+	}
 
 	fmt.Println("----------- Get All Projects -------------")
 	allProjects, err := client.Projects.GetAll()
@@ -78,12 +95,4 @@ func main() {
 		fmt.Println("error", err)
 	}
 	fmt.Println(allProjects)
-
-	fmt.Println("------------------------")
-	issueTypes, err := client.IssueTypes.Get()
-	for _, issueType := range issueTypes {
-		fmt.Println("issueType: ", issueType)
-	}
-
-	fmt.Println("Hello World")
 }
