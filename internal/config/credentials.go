@@ -1,14 +1,15 @@
-package jira
+package config
 
 import "fmt"
 
-type JiraCredentials struct {
+// JIRA CREDENTIALS
+type Credentials struct {
 	Email   string
 	Token   string
-	BaseUrl string
+	BaseUrl string // https://your-domain.atlassian.net/rest/api/3
 }
 
-func (j *JiraCredentials) Validate() error {
+func (j *Credentials) Validate() error {
 	var missing []string
 
 	if j.Email == "" {

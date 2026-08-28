@@ -6,17 +6,25 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
-	"github.com/hopesain/jira-gopher/internal/jira"
+	"github.com/hopesain/jira-gopher/internal"
+	"github.com/hopesain/jira-gopher/internal/config"
 )
 
-func CreateIssue(credentials jira.JiraCredentials, payload CreateIssueRequest) (CreateIssueResponse, error) {
-	client := &http.Client{
-		Timeout: time.Second * 15,
-	}
+type IssuesService struct {
+	credentials config.Credentials
+	httpClient  *http.Client
+}
 
-	url := credentials.BaseUrl + "/issue"
+func New(credentials config.Credentials, httpClient *http.Client) *IssuesService {
+	return &IssuesService{
+		credentials: credentials,
+		httpClient:  httpClient,
+	}
+}
+
+func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse, error) {
+	url := i.credentials.BaseUrl + "/issue"
 
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -28,11 +36,11 @@ func CreateIssue(credentials jira.JiraCredentials, payload CreateIssueRequest) (
 		return CreateIssueResponse{}, fmt.Errorf("failed to build the request: %w", err)
 	}
 
-	req.SetBasicAuth(credentials.Email, credentials.Token)
+	req.SetBasicAuth(i.credentials.Email, i.credentials.Token)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := i.httpClient.Do(req)
 	if err != nil {
 		return CreateIssueResponse{}, fmt.Errorf("request failed: %w", err)
 	}
@@ -45,7 +53,7 @@ func CreateIssue(credentials jira.JiraCredentials, payload CreateIssueRequest) (
 	}
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "request failed",
@@ -54,7 +62,7 @@ func CreateIssue(credentials jira.JiraCredentials, payload CreateIssueRequest) (
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "incorrect or missing authentication credentials",
@@ -63,25 +71,25 @@ func CreateIssue(credentials jira.JiraCredentials, payload CreateIssueRequest) (
 	}
 
 	if resp.StatusCode == http.StatusForbidden {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
-			Status: resp.Status,
+		return CreateIssueResponse{}, &internal.HttpResponseError{
+			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
-			Message: "user does not have necessary permissions to create a task",
-			Body: body,
+			Message:    "user does not have necessary permissions to create a task",
+			Body:       body,
 		}
 	}
 
 	if resp.StatusCode == http.StatusUnprocessableEntity {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
-			Status: resp.Status,
+		return CreateIssueResponse{}, &internal.HttpResponseError{
+			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
-			Message: "configuration problems",
-			Body: body,
+			Message:    "configuration problems",
+			Body:       body,
 		}
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "something went wrong",

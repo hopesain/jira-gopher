@@ -1,32 +1,39 @@
-package issues
+package issuetypes
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
-	"github.com/hopesain/jira-gopher/internal/jira"
+	"github.com/hopesain/jira-gopher/internal"
+	"github.com/hopesain/jira-gopher/internal/config"
 )
 
-// Get issue types for user
-func GetIssueTypes(credentials jira.JiraCredentials) ([]IssueType, error) {
-	client := &http.Client{
-		Timeout: time.Second * 15,
-	}
+type IssuesTypesService struct {
+	credentials config.Credentials
+	httpClient  *http.Client
+}
 
-	url := credentials.BaseUrl + "/issuetype"
+func New(credentials config.Credentials, httpClient *http.Client) *IssuesTypesService {
+	return &IssuesTypesService{
+		credentials: credentials,
+		httpClient:  httpClient,
+	}
+}
+
+func (i *IssuesTypesService) Get() ([]IssueType, error) {
+	url := i.credentials.BaseUrl + "/issuetype"
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the request: %w", err)
 	}
 
-	req.SetBasicAuth(credentials.Email, credentials.Token)
+	req.SetBasicAuth(i.credentials.Email, i.credentials.Token)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := i.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -39,7 +46,7 @@ func GetIssueTypes(credentials jira.JiraCredentials) ([]IssueType, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, &jira.HttpResponseError{
+		return nil, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "something went wrong",
@@ -54,4 +61,5 @@ func GetIssueTypes(credentials jira.JiraCredentials) ([]IssueType, error) {
 	}
 
 	return response, nil
+
 }

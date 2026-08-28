@@ -2,20 +2,6 @@ package projects
 
 import "fmt"
 
-type ProjectTypeDefault struct {
-	ProjectType        string
-	ProjectTypeKey     string
-	ProjectTemplateKey string
-}
-
-type ProjectTypeResponse struct {
-	Key                string `json:"key"`
-	FormattedKey       string `json:"formattedKey"`
-	DescriptionI18nKey string `json:"descriptionI18nKey"`
-	Icon               string `json:"icon"`
-	Color              string `json:"color"`
-}
-
 type ProjectsResponse struct {
 	Self       string    `json:"self"`
 	NextPage   string    `json:"nextPage,omitempty"`
@@ -126,4 +112,46 @@ type CreateProjectResponse struct {
 	Self string `json:"self"`
 	ID   int    `json:"id"`
 	Key  string `json:"key"`
+}
+
+type GetProjectResponse struct {
+	Expand         string            `json:"expand,omitempty"`
+	Self           string            `json:"self"`
+	ID             string            `json:"id"`
+	Key            string            `json:"key"`
+	Description    string            `json:"description,omitempty"`
+	Lead           ProjectLead       `json:"lead"`
+	Components     []any             `json:"components"`
+	IssueTypes     []IssueType       `json:"issueTypes"`
+	AssigneeType   string            `json:"assigneeType"`
+	Versions       []any             `json:"versions"`
+	Name           string            `json:"name"`
+	Roles          map[string]string `json:"roles"`
+	AvatarUrls     AvatarUrls        `json:"avatarUrls"`
+	ProjectTypeKey string            `json:"projectTypeKey"`
+	Simplified     bool              `json:"simplified"`
+	Style          string            `json:"style"`
+	IsPrivate      bool              `json:"isPrivate"`
+	Properties     map[string]any    `json:"properties"`
+	EntityID       string            `json:"entityId,omitempty"`
+	UUID           string            `json:"uuid,omitempty"`
+}
+
+type ProjectLead struct {
+	Self        string     `json:"self"`
+	AccountID   string     `json:"accountId"`
+	AvatarUrls  AvatarUrls `json:"avatarUrls"`
+	DisplayName string     `json:"displayName"`
+	Active      bool       `json:"active"`
+}
+
+type IssueType struct {
+	Self           string `json:"self"`
+	ID             string `json:"id"`
+	Description    string `json:"description"`
+	IconUrl        string `json:"iconUrl"`
+	Name           string `json:"name"`
+	Subtask        bool   `json:"subtask"`
+	AvatarID       int    `json:"avatarId"`
+	HierarchyLevel int    `json:"hierarchyLevel"`
 }
