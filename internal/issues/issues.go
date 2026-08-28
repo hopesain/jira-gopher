@@ -1,10 +1,14 @@
 package issues
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/hopesain/jira-gopher/internal/config"
+	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
 type IssuesService struct {
@@ -19,21 +23,85 @@ func New(credentials config.Credentials, httpClient *http.Client) *IssuesService
 	}
 }
 
-func (i *IssuesService) Create(issue string) (string, error) {
-	if issue == "" {
-		return "", fmt.Errorf("issue name is required")
+func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse, error) {
+	url := i.credentials.BaseUrl + "/issue"
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return CreateIssueResponse{}, fmt.Errorf("failed to marshal or serialize the payload: %w", err)
 	}
 
-	if i.credentials.Email == "" {
-		return "", fmt.Errorf("it is required")
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonPayload))
+	if err != nil {
+		return CreateIssueResponse{}, fmt.Errorf("failed to build the request: %w", err)
 	}
 
-	return issue + i.credentials.BaseUrl, nil
-}
+	req.SetBasicAuth(i.credentials.Email, i.credentials.Token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
-func (i *IssuesService) BatchCreate(names []string) ([]string, error) {
-	if len(names) == 0 {
-		return nil, fmt.Errorf("names cannot be empty")
+	resp, err := i.httpClient.Do(req)
+	if err != nil {
+		return CreateIssueResponse{}, fmt.Errorf("request failed: %w", err)
 	}
-	return []string{"hope", "mary", "saviour"}, nil
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return CreateIssueResponse{}, fmt.Errorf("failed to read the response body: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusBadRequest {
+		return CreateIssueResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "request failed",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return CreateIssueResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "incorrect or missing authentication credentials",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode == http.StatusForbidden {
+		return CreateIssueResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "user does not have necessary permissions to create a task",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode == http.StatusUnprocessableEntity {
+		return CreateIssueResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "configuration problems",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		return CreateIssueResponse{}, &jira.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
+	}
+
+	var response CreateIssueResponse
+
+	if err := json.Unmarshal(body, &response); err != nil {
+		return CreateIssueResponse{}, fmt.Errorf("failed to decode the response body: %w", err)
+	}
+
+	return response, nil
 }
