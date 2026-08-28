@@ -1,16 +1,37 @@
 package jira
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/hopesain/jira-gopher/internal/config"
+	"github.com/hopesain/jira-gopher/internal/issues"
+	"github.com/hopesain/jira-gopher/internal/myself"
+	"github.com/hopesain/jira-gopher/internal/projecttypes"
+)
 
 type Client struct {
-	Credentials
-	User string
-	Age  int
+	credentials config.Credentials
+	httpClient  *http.Client
+
+	Issues       *issues.IssuesService
+	Myself       *myself.MyselfService
+	ProjectTypes *projecttypes.ProjectTypesService
 }
 
-func NewClient(jiraCredentials Credentials) (*Client, error) {
-	if err := jiraCredentials.Validate(); err != nil {
+func NewClient(credentials config.Credentials) (*Client, error) {
+	if err := credentials.Validate(); err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
-	return &Client{Credentials: jiraCredentials}, nil
+
+	httpClient := &http.Client{Timeout: time.Second * 20}
+
+	return &Client{
+		credentials:  credentials,
+		httpClient:   httpClient,
+		Issues:       issues.New(credentials, httpClient),
+		Myself:       myself.New(credentials, httpClient),
+		ProjectTypes: projecttypes.New(credentials, httpClient),
+	}, nil
 }
