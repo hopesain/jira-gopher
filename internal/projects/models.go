@@ -2,20 +2,6 @@ package projects
 
 import "fmt"
 
-type ProjectTypeDefault struct {
-	ProjectType        string
-	ProjectTypeKey     string
-	ProjectTemplateKey string
-}
-
-type ProjectTypeResponse struct {
-	Key                string `json:"key"`
-	FormattedKey       string `json:"formattedKey"`
-	DescriptionI18nKey string `json:"descriptionI18nKey"`
-	Icon               string `json:"icon"`
-	Color              string `json:"color"`
-}
-
 type ProjectsResponse struct {
 	Self       string    `json:"self"`
 	NextPage   string    `json:"nextPage,omitempty"`
