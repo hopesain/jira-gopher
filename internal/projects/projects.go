@@ -24,7 +24,7 @@ func New(credentials config.Credentials, httpClient *http.Client) *ProjectsServi
 	}
 }
 
-func (p *ProjectsService) Get() (ProjectsResponse, error) {
+func (p *ProjectsService) GetAll() (ProjectsResponse, error) {
 	url := p.credentials.BaseUrl + "/project/search"
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -91,6 +91,65 @@ func (p *ProjectsService) Get() (ProjectsResponse, error) {
 
 	return response, nil
 
+}
+
+func (p *ProjectsService) Get(projectIdOrKey string) (GetProjectResponse, error) {
+	url := p.credentials.BaseUrl + "/project/" + projectIdOrKey
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return GetProjectResponse{}, fmt.Errorf("failed to build the request: %w", err)
+	}
+
+	req.SetBasicAuth(p.credentials.Email, p.credentials.Token)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return GetProjectResponse{}, fmt.Errorf("request failed: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return GetProjectResponse{}, fmt.Errorf("failed to read the response body: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return GetProjectResponse{}, &internal.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "incorrect or missing authentication credentials",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return GetProjectResponse{}, &internal.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "no project matching the given id or key is found",
+			Body:       body,
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return GetProjectResponse{}, &internal.HttpResponseError{
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+			Message:    "something went wrong",
+			Body:       body,
+		}
+	}
+
+	var response GetProjectResponse
+
+	if err := json.Unmarshal(body, &response); err != nil {
+		return GetProjectResponse{}, fmt.Errorf("failed to decode the response body: %w", err)
+	}
+
+	return response, nil
 }
 
 func (p *ProjectsService) Create(payload CreateProjectRequest) (CreateProjectResponse, error) {
