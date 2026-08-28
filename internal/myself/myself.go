@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/hopesain/jira-gopher/internal"
 	"github.com/hopesain/jira-gopher/internal/config"
-	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
 type MyselfService struct {
@@ -18,9 +18,9 @@ type MyselfService struct {
 func New(creds config.Credentials, httpClient *http.Client) *MyselfService {
 	return &MyselfService{
 		credentials: creds,
-		httpClient: httpClient,
+		httpClient:  httpClient,
 	}
-} 
+}
 
 func (m *MyselfService) GetCurrentUser() (GetCurrentUserResponse, error) {
 	url := m.credentials.BaseUrl + "/myself"
@@ -46,7 +46,7 @@ func (m *MyselfService) GetCurrentUser() (GetCurrentUserResponse, error) {
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return GetCurrentUserResponse{}, &jira.HttpResponseError{
+		return GetCurrentUserResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "incorrect or missing authentication credentials",
@@ -55,7 +55,7 @@ func (m *MyselfService) GetCurrentUser() (GetCurrentUserResponse, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return GetCurrentUserResponse{}, &jira.HttpResponseError{
+		return GetCurrentUserResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "something went wrong",

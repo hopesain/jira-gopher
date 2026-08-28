@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/hopesain/jira-gopher/internal"
 	"github.com/hopesain/jira-gopher/internal/config"
-	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
 type IssuesService struct {
@@ -53,7 +53,7 @@ func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse,
 	}
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "request failed",
@@ -62,7 +62,7 @@ func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse,
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "incorrect or missing authentication credentials",
@@ -71,7 +71,7 @@ func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse,
 	}
 
 	if resp.StatusCode == http.StatusForbidden {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "user does not have necessary permissions to create a task",
@@ -80,7 +80,7 @@ func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse,
 	}
 
 	if resp.StatusCode == http.StatusUnprocessableEntity {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "configuration problems",
@@ -89,7 +89,7 @@ func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse,
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return CreateIssueResponse{}, &jira.HttpResponseError{
+		return CreateIssueResponse{}, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "something went wrong",

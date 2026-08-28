@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/hopesain/jira-gopher/internal"
 	"github.com/hopesain/jira-gopher/internal/config"
-	"github.com/hopesain/jira-gopher/internal/jira"
 )
 
 type IssuesTypesService struct {
@@ -46,7 +46,7 @@ func (i *IssuesTypesService) Get() ([]IssueType, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, &jira.HttpResponseError{
+		return nil, &internal.HttpResponseError{
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 			Message:    "something went wrong",
