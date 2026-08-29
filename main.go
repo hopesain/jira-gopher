@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/hopesain/jira-gopher/internal/config"
-	"github.com/hopesain/jira-gopher/internal/issues"
 	"github.com/hopesain/jira-gopher/jira"
 	"github.com/joho/godotenv"
 )
@@ -39,19 +38,7 @@ func main() {
 
 	fmt.Println("------------------ Create Issue -------------------------- ")
 
-	issue := issues.CreateIssueRequest{
-		Fields: issues.CreateIssueFields{
-			Project: issues.ProjectRef{
-				ID: "projectID",
-			},
-			IssueType: issues.IssueTypeRef{
-				ID: "issueTypeID",
-			},
-			Summary: "New Jira Issue",
-		},
-	}
-
-	issueCreate, err := client.Issues.Create(issue)
+	issueCreate, err := client.Issues.Create("projectID", "issueTypeID", "summary")
 	if err != nil {
 		fmt.Println("error: ", err)
 		os.Exit(1)
