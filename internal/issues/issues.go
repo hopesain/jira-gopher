@@ -23,8 +23,16 @@ func New(credentials config.Credentials, httpClient *http.Client) *IssuesService
 	}
 }
 
-func (i *IssuesService) Create(payload CreateIssueRequest) (CreateIssueResponse, error) {
+func (i *IssuesService) Create(projectID, issueTypeID, summary string) (CreateIssueResponse, error) {
 	url := i.credentials.BaseUrl + "/issue"
+
+	payload := CreateIssueRequest{
+		Fields: CreateIssueFields{
+			Project:   ProjectRef{ID: projectID},
+			IssueType: IssueTypeRef{ID: issueTypeID},
+			Summary:   summary,
+		},
+	}
 
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
